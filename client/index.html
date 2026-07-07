@@ -310,7 +310,11 @@
 
 			// ----- UTILITY -----
 			async function api(url) {
-				const res = await fetch(url);
+				const res = await fetch(url, {
+					headers: {
+						"ngrok-skip-browser-warning": "true",
+					},
+				});
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				return res;
 			}
