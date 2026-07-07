@@ -1,11 +1,11 @@
 # R-rated
 
- Educational RAT for authorized penetration testing. Client-server remote administration with Supabase-backed file exfiltration.
+RAT for penetration testing. Client-server remote administration with Supabase-backed file exfiltration.
 
 ## Architecture
 
-Browser Client ──HTTP──▶ FastAPI Server (port 6969, Windows target)  
-│  
+Browser Client  
+├──HTTP──▶ FastAPI Server (port 6969, Windows target)  
 ├── pyautogui (screenshots)  
 ├── subprocess (cmd execution)    
 └── Supabase (file storage)
@@ -35,14 +35,13 @@ The server runs on the target Windows machine. The client is a static HTML page.
 
 ```bash
 pip install fastapi uvicorn pyautogui python-dotenv supabase
-2. Supabase setup
-Create a Supabase project
-Create a public storage bucket named rat
-Create a folder inside it called public
 ```
+### 2. Supabase setup
+Create a Supabase project  
+Create a public storage bucket named rat  
+Create a folder inside it called public  
+
 ### 3. Environment (.env)
-
-
 
 ```bash
 SUPABASE_URL=https://your-project.supabase.co
@@ -76,6 +75,7 @@ All endpoints accept GET requests. Paths are relative to C:\.
 | /uploadfile?dwpath=Desktop\&dbfilename=payload.exe	| 
 | /cmd?cmd=whoami&path=Users\victim	| returns {stdout, stderr, code}
 -----
+
 # Security Notes
 1. No auth — open to anyone who can reach the target. Tunnel over SSH/VPN in real engagements.
 2. Plaintext HTTP — everything is visible on the wire.
