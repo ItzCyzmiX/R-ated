@@ -1,15 +1,14 @@
-# ☠ Remote Access Tool
+# R-rated
 
-> Educational RAT for authorized penetration testing. Client-server remote administration with Supabase-backed file exfiltration.
+ Educational RAT for authorized penetration testing. Client-server remote administration with Supabase-backed file exfiltration.
 
 ## Architecture
 
-Browser Client ──HTTP──▶ FastAPI Server (port 6969, Windows target) 
-│ 
-├── pyautogui (screenshots) 
-├── subprocess (cmd execution) 
+Browser Client ──HTTP──▶ FastAPI Server (port 6969, Windows target)  
+│  
+├── pyautogui (screenshots)  
+├── subprocess (cmd execution)    
 └── Supabase (file storage)
-
 
 
 
