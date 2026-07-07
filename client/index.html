@@ -428,7 +428,9 @@
 					const text = await res.text();
 					// If Supabase returns a URL, show it
 					if (text.startsWith("http")) {
-						show("download-output", "public url: " + text, true);
+						a = document.createElement("a");
+						a.href = text;
+						a.click();
 					} else {
 						show("download-output", text, false);
 					}
