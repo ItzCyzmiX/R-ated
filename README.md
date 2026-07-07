@@ -5,7 +5,7 @@ RAT for penetration testing. Client-server remote administration with Supabase-b
 ## Architecture
 
 Browser Client  
-├──HTTP──▶ FastAPI Server (port 6969, Windows target)  
+├── HTTP: FastAPI Server (port 6969, Windows target)  
 ├── pyautogui (screenshots)  
 ├── subprocess (cmd execution)    
 └── Supabase (file storage)
@@ -53,13 +53,20 @@ SUPABASE_KEY=your-service-role-key
 python server.py
 # or:
 uvicorn server:app --host 0.0.0.0 --port 6969
-5. Open the client
-Open client.html in a browser. If the server is remote, update the BASE constant:
 ```
+
+### 5. Open the client
+serve the client.html in a server. simplest way is:
+```bash
+python -m http.server # on the root of the client folder
+```
+
+If the server is remote, update the BASE constant in index.html:
 
 ```js
 const BASE = "http://<target-ip>:6969";
 ```
+
 ## API Quick Reference
 All endpoints accept GET requests. Paths are relative to C:\.
 
