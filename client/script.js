@@ -68,7 +68,7 @@ function show(el, content, ok = true) {
 // ----- SYSTEM INFO -----
 async function getSysInfo() {
 	try {
-		const res = await api(`${BASE}/info`);
+		const res = await api(`${BASE}/sysinfo`);
 		const data = await res.json();
 
 		if (data.error) {
