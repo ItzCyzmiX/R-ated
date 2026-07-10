@@ -1,7 +1,7 @@
 import os
 import shutil
 import subprocess
-import time
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import cv2
@@ -11,9 +11,13 @@ from av import VideoFrame
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse
 from mss import mss
 from supabase import Client, create_client
+from pyngrok import ngrok
+
+
+
 
 load_dotenv()
 
@@ -22,7 +26,45 @@ supabase: Client = create_client(
     os.getenv("SUPABASE_KEY"),
 )
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+	ngrok.set_auth_token(os.getenv('NGROK_TOKEN'))
+	tunnel = ngrok.connect("6969")
+	public_url = tunnel.public_url
+
+
+	response = (
+    	supabase.table("connected")
+		    .upsert({"name": os.getlogin(), "ngrok_url": public_url})
+		    .execute()
+	)
+
+	if len(response.data):
+		print('sent connection state succesfully')
+	else:
+		print('unable to send connection data to host')
+
+	app.state.ngrok_url = public_url
+
+	yield
+	res = (
+    	supabase.table("connected")
+		    .delete()
+			.eq("ngrok_url", public_url)
+		    .execute()
+	)
+
+	if len(res.data):
+		print('sent disconnection state succesfully')
+	else:
+		print('unable to send disconnection data to host')
+
+	ngrok.disconnect(public_url)
+	ngrok.kill()
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

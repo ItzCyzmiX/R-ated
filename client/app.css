@@ -208,3 +208,115 @@ hr {
 #main-screen {
 	display: none;
 }
+
+#device-screen {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 80vh;
+}
+#device-screen .card {
+	width: 600px;
+	padding: 32px;
+}
+#device-screen h1 {
+	text-align: center;
+	border-bottom: none;
+	margin-bottom: 8px;
+	font-size: 1.8rem;
+}
+#device-screen .subtitle {
+	text-align: center;
+	color: #666;
+	font-size: 0.78rem;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	margin-bottom: 24px;
+}
+#device-screen .device-count {
+	text-align: center;
+	color: #555;
+	font-size: 0.75rem;
+	margin-bottom: 16px;
+}
+.device-list {
+	max-height: 300px;
+	overflow-y: auto;
+	border: 1px solid #333;
+	background: #0a0a0a;
+}
+.device-item {
+	display: flex;
+	align-items: center;
+	padding: 10px 14px;
+	cursor: pointer;
+	border-bottom: 1px solid #222;
+	transition: 0.1s;
+	gap: 12px;
+}
+.device-item:last-child {
+	border-bottom: none;
+}
+.device-item:hover {
+	background: #1a1a1a;
+}
+.device-item.selected {
+	background: #222;
+	border-left: 3px solid #fff;
+}
+.device-item .status-indicator {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+.device-item .status-indicator.online {
+	background: #4caf50;
+}
+.device-item .status-indicator.offline {
+	background: #ff4444;
+}
+.device-item .device-name {
+	flex: 1;
+	font-size: 0.85rem;
+	color: #e0e0e0;
+}
+.device-item .device-url {
+	font-size: 0.7rem;
+	color: #666;
+	font-family: "Consolas", monospace;
+}
+.device-item .device-os {
+	font-size: 0.7rem;
+	color: #888;
+	padding: 2px 8px;
+	border: 1px solid #333;
+}
+.connect-btn {
+	width: 100%;
+	padding: 12px;
+	font-size: 0.9rem;
+	margin-top: 16px;
+	background: #222;
+	border-color: #555;
+}
+.connect-btn:hover:not(:disabled) {
+	background: #444;
+	border-color: #aaa;
+}
+#device-screen .error {
+	color: #ff4444;
+	text-align: center;
+	margin-top: 12px;
+	font-size: 0.8rem;
+}
+#device-screen .no-devices {
+	text-align: center;
+	color: #555;
+	padding: 40px 0;
+	font-size: 0.85rem;
+}
+
+#main-screen {
+	display: none;
+}

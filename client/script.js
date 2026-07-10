@@ -1,52 +1,170 @@
 let BASE = "";
+let devices = [];
+let selectedDeviceIdx = -1;
 
-// ----- CONNECT SCREEN -----
-function setAddress(addr) {
-	document.getElementById("server-address").value = addr;
+const supabaseClient = supabase.createClient(
+	supabase_auth['URL'],
+	supabase_auth['KEY'],
+);
+
+const deviceListEl = document.getElementById("device-list");
+const deviceCountEl = document.getElementById("device-count");
+const connectBtn = document.getElementById("connect-btn");
+const deviceErrorEl = document.getElementById("device-error");
+
+document.getElementById("connect-btn").addEventListener("click", async () => {
+	if (selectedDeviceIdx !== -1) {
+		await connectToDevice()
+	}
+})
+
+function selectDevice(idx) {
+	selectedDeviceIdx = idx;
+	deviceErrorEl.textContent = "";
+	renderDeviceList();
 }
 
-async function connect() {
-	const addr = document.getElementById("server-address").value.trim();
-	if (!addr) {
-		document.getElementById("connect-error").textContent =
-			"enter a server address";
+function renderDeviceList() {
+	if (devices.length === 0) {
+		deviceListEl.innerHTML =
+			'<div class="no-devices">no connected devices</div>';
+		deviceCountEl.textContent = "0 devices connected";
+		connectBtn.disabled = true;
 		return;
 	}
 
-	// Strip trailing slash
-	BASE = addr.replace(/\/+$/, "");
+	deviceCountEl.textContent = `${devices.length} device${devices.length !== 1 ? "s" : ""} connected`;
 
-	// Test connection
+	let html = "";
+	devices.forEach((d, i) => {
+		const selected = i === selectedDeviceIdx ? "selected" : "";
+		const os = d.os || d.os_name || "unknown";
+		html += `
+						<div class="device-item ${selected}">
+							<div class="status-indicator online"></div>
+							<div class="device-name">${d.name || d.os_name || "unknown"}</div>
+							<div class="device-os">${d.os_name || "windows"}</div>
+							<div class="device-url">${d.ngrok_url}</div>
+						</div>
+					`;
+	});
+
+
+	deviceListEl.innerHTML = html;
+	deviceListEl.querySelectorAll(".device-name").forEach((el, i) => {
+		el.addEventListener("click", () => {
+			selectDevice(i)
+
+		})
+
+	});
+	connectBtn.disabled = selectedDeviceIdx === -1;
+}
+
+// ----- REALTIME SUBSCRIPTION -----
+function subscribeToDevices() {
+	// Initial fetch
+	supabaseClient
+		.from("connected")
+		.select("*")
+		.then(({ data, error }) => {
+			if (error) {
+				console.error("fetch error:", error);
+				deviceErrorEl.textContent = "failed to load devices: " + error.message;
+				return;
+			}
+			devices = data || [];
+			renderDeviceList();
+		});
+
+	// Realtime inserts
+	supabaseClient
+		.channel("connected-devices")
+		.on(
+			"postgres_changes",
+			{ event: "INSERT", schema: "public", table: "connected" },
+			(payload) => {
+				const newDevice = payload.new;
+				// Avoid duplicates
+				if (!devices.find((d) => d.ngrok_url === newDevice.ngrok_url)) {
+					devices.push(newDevice);
+					renderDeviceList();
+				}
+			},
+		)
+		.on(
+			"postgres_changes",
+			{ event: "DELETE", schema: "public", table: "connected" },
+			(payload) => {
+				const oldDevice = payload.old;
+				devices = devices.filter((d) => d.ngrok_url !== oldDevice.ngrok_url);
+				if (selectedDeviceIdx >= devices.length) {
+					selectedDeviceIdx = -1;
+				}
+				renderDeviceList();
+			},
+		)
+		.on(
+			"postgres_changes",
+			{ event: "UPDATE", schema: "public", table: "connected" },
+			(payload) => {
+				const updated = payload.new;
+				const idx = devices.findIndex((d) => d.ngrok_url === updated.ngrok_url);
+				if (idx !== -1) {
+					devices[idx] = updated;
+					renderDeviceList();
+				}
+			},
+		)
+		.subscribe();
+}
+subscribeToDevices();
+async function connectToDevice() {
+	if (selectedDeviceIdx === -1) return;
+
+	const device = devices[selectedDeviceIdx];
+	const addr = device.ngrok_url.replace(/\/+$/, "");
+
+	deviceErrorEl.textContent = "connecting...";
+
 	try {
-		const res = await fetch(BASE + "/", {
+		const res = await fetch(addr + "/", {
 			headers: { "ngrok-skip-browser-warning": "true" },
 		});
 		let text = await res.text();
-		text = text.replaceAll('"', "");
+		text = text.replaceAll('"', "")
 		if (text !== "Target Connected") {
-			document.getElementById("connect-error").textContent =
-				"unexpected response: " + text;
+			deviceErrorEl.textContent = "unexpected response: " + text;
 			return;
 		} else {
-			await getSysInfo();
+
 		}
 	} catch (e) {
-		document.getElementById("connect-error").textContent =
-			"connection failed: " + e.message;
+		deviceErrorEl.textContent = "connection failed: " + e.message;
 		return;
 	}
 
 	// Switch to main screen
-	document.getElementById("connect-screen").style.display = "none";
+	BASE = addr;
+	document.getElementById("device-screen").style.display = "none";
 	document.getElementById("main-screen").style.display = "block";
-	document.getElementById("status-target").textContent = BASE;
+	document.getElementById("status-target").textContent =
+		device.name || device.ngrok_url;
+	await getSysInfo()
 }
 
 function disconnect() {
 	BASE = "";
 	document.getElementById("main-screen").style.display = "none";
-	document.getElementById("connect-screen").style.display = "flex";
-	document.getElementById("connect-error").textContent = "";
+	document.getElementById("device-screen").style.display = "flex";
+	deviceErrorEl.textContent = "";
+	selectedDeviceIdx = -1;
+	renderDeviceList();
+}
+
+// ----- CONNECT SCREEN -----
+function setAddress(addr) {
+	document.getElementById("server-address").value = addr;
 }
 
 // ----- UTILITY -----
@@ -280,3 +398,19 @@ async function runCmd() {
 		show("cmd-output", e.message, false);
 	}
 }
+window.takeScreenshot = takeScreenshot;
+window.listDir = listDir;
+window.readFile = readFile;
+window.createFile = createFile;
+window.deleteFile = deleteFile;
+window.deleteFolder = deleteFolder;
+window.downloadFile = downloadFile;
+window.uploadFile = uploadFile;
+window.runCmd = runCmd;
+window.getSysInfo = getSysInfo;
+window.startStream = startStream;
+window.stopStream = stopStream;
+window.disconnect = disconnect;
+window.selectDevice = selectDevice;
+window.connectToDevice = connectToDevice;
+window.setAddress = setAddress;

