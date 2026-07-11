@@ -1,0 +1,10 @@
+aiortc==1.14.0
+av==16.1.0
+fastapi==0.115.11
+fastapi-cli==0.0.7
+mss==10.0.0
+opencv-python==4.11.0.86
+python-dotenv==1.0.1
+supabase==2.27.2
+pyngrok==8.1.2
+numpy==2.2.2
