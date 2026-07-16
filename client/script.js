@@ -1,6 +1,7 @@
 let BASE = "";
 let devices = [];
 let selectedDeviceIdx = -1;
+let on_main_page = false
 
 const supabaseClient = supabase.createClient(
 	supabase_auth['URL'],
@@ -97,11 +98,20 @@ function subscribeToDevices() {
 			{ event: "DELETE", schema: "public", table: "connected" },
 			(payload) => {
 				const oldDevice = payload.old;
-				devices = devices.filter((d) => d.ngrok_url !== oldDevice.ngrok_url);
-				if (selectedDeviceIdx >= devices.length) {
-					selectedDeviceIdx = -1;
+
+				if (!on_main_page) {
+					devices = devices.filter((d) => d.ngrok_url !== oldDevice.ngrok_url);
+					if (selectedDeviceIdx >= devices.length) {
+						selectedDeviceIdx = -1;
+					}
+					renderDeviceList();
+				} else {
+					addr = oldDevice.ngrok_url.replace(/\/+$/, "");
+					if (addr === BASE) {
+						disconnect()
+					}
 				}
-				renderDeviceList();
+
 			},
 		)
 		.on(
@@ -119,6 +129,7 @@ function subscribeToDevices() {
 		.subscribe();
 }
 subscribeToDevices();
+
 async function connectToDevice() {
 	if (selectedDeviceIdx === -1) return;
 
@@ -150,7 +161,11 @@ async function connectToDevice() {
 	document.getElementById("main-screen").style.display = "block";
 	document.getElementById("status-target").textContent =
 		device.name || device.ngrok_url;
+
+	on_main_page = true
+
 	await getSysInfo()
+
 }
 
 function disconnect() {
@@ -160,11 +175,7 @@ function disconnect() {
 	deviceErrorEl.textContent = "";
 	selectedDeviceIdx = -1;
 	renderDeviceList();
-}
-
-// ----- CONNECT SCREEN -----
-function setAddress(addr) {
-	document.getElementById("server-address").value = addr;
+	on_main_page = false
 }
 
 // ----- UTILITY -----
@@ -398,6 +409,7 @@ async function runCmd() {
 		show("cmd-output", e.message, false);
 	}
 }
+
 window.takeScreenshot = takeScreenshot;
 window.listDir = listDir;
 window.readFile = readFile;

